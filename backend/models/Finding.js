@@ -24,6 +24,18 @@ const Finding = sequelize.define('Finding', {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  protocol: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  port: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  host: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 });
 
 module.exports = Finding;

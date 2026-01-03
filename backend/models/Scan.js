@@ -25,8 +25,12 @@ const Scan = sequelize.define('Scan', {
     type: DataTypes.STRING,
     defaultValue: 'public',
   },
-  sshCredentials: {
+  snmpv3Credentials: {
     type: DataTypes.JSON,
+    allowNull: true,
+  },
+  credentialId: {
+    type: DataTypes.INTEGER,
     allowNull: true,
   },
 });

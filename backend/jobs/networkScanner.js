@@ -1,6 +1,7 @@
 const db = require('../models');
 const snmp = require('net-snmp');
 const { NodeSSH } = require('node-ssh');
+const fs = require('fs');
 
 const runNetworkScan = async (scanId, io, userId) => {
     console.log(`Starting network scan for scanId: ${scanId}`);
@@ -16,20 +17,38 @@ const runNetworkScan = async (scanId, io, userId) => {
         io.to(`user-${userId}`).emit('scan_updated', { scanId, status: 'running', message: 'Starting network device scan...' });
 
         const allFindings = [];
-        const target = scan.target; // Assuming target is an IP address
+        const target = scan.target;
+
+        // Input validation for target
+        const isValidTarget = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}$|^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(target);
+        if (!isValidTarget) {
+            await scan.update({ status: 'failed' });
+            await db.Finding.create({
+                scan_id: scanId,
+                category: 'Scan Execution',
+                severity: 'Critical',
+                description: `Invalid target: ${target}. The target must be a valid IP address or hostname.`,
+                recommendation: 'Please provide a valid target and restart the scan.'
+            });
+            io.to(`user-${userId}`).emit('scan_completed', { scanId, status: 'failed' });
+            return;
+        }
+
         const community = scan.snmpCommunity || 'public'; // Allow configurable community string
 
         // 1. SNMP Scan
         io.to(`user-${userId}`).emit('scan_updated', { scanId, status: 'running', message: `Polling ${target} with SNMP community '${community}'...` });
-        const snmpFindings = await performSnmpScan(target, community);
+        const snmpFindings = await performSnmpScan(scan);
         allFindings.push(...snmpFindings);
 
-        // 2. SSH Scan (placeholder)
-        // In the future, we can add SSH scanning if credentials are provided
-        if (scan.sshCredentials) {
-             io.to(`user-${userId}`).emit('scan_updated', { scanId, status: 'running', message: `Attempting SSH connection to ${target}...` });
-             const sshFindings = await performSshScan(target, scan.sshCredentials);
-             allFindings.push(...sshFindings);
+        // 2. SSH Scan
+        if (scan.credentialId) {
+            const credential = await db.Credential.findByPk(scan.credentialId);
+            if (credential && credential.type === 'SSH') {
+                io.to(`user-${userId}`).emit('scan_updated', { scanId, status: 'running', message: `Attempting SSH connection to ${target}...` });
+                const sshFindings = await performSshScan(target, credential);
+                allFindings.push(...sshFindings);
+            }
         }
 
         // Save findings to the database
@@ -61,14 +80,15 @@ const runNetworkScan = async (scanId, io, userId) => {
     }
 };
 
-const performSshScan = async (target, credentials) => {
+const performSshScan = async (target, credential) => {
     const findings = [];
     const ssh = new NodeSSH();
+
     try {
         await ssh.connect({
             host: target,
-            username: credentials.username,
-            password: credentials.password // In a real app, use private keys!
+            username: credential.username,
+            privateKey: credential.secret
         });
 
         // Example: run a command to get firmware version on a Cisco device
@@ -101,9 +121,30 @@ const performSshScan = async (target, credentials) => {
 }
 
 
-const performSnmpScan = (target, community) => {
+const performSnmpScan = async (scan) => {
     const findings = [];
-    const session = snmp.createSession(target, community, { timeout: 10000 });
+    const target = scan.target;
+    let session;
+
+    if (scan.credentialId) {
+        const credential = await db.Credential.findByPk(scan.credentialId);
+        if (credential && credential.type === 'SNMPv3') {
+            const user = {
+                name: credential.username,
+                level: snmp.SecurityLevel.authPriv,
+                authProtocol: snmp.AuthProtocols.sha,
+                authKey: credential.secret,
+                privProtocol: snmp.PrivProtocols.aes,
+                privKey: credential.secret
+            };
+            session = snmp.createV3Session(target, user, { timeout: 10000 });
+        }
+    }
+
+    if (!session) {
+        const community = scan.snmpCommunity || 'public';
+        session = snmp.createSession(target, community, { timeout: 10000 });
+    }
 
     // 1. Get basic device info
     const oids = [

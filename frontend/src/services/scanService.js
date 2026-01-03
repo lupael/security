@@ -7,7 +7,11 @@ const getScans = () => {
   return axios.get(API_URL, { headers: authHeader() });
 };
 
-const startScan = (scanData) => {
+const startScan = (target, type, credentialId) => {
+  const scanData = { target, type };
+  if (credentialId) {
+    scanData.credentialId = credentialId;
+  }
   return axios.post(API_URL, scanData, { headers: authHeader() });
 };
 

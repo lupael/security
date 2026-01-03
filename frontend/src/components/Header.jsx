@@ -8,8 +8,11 @@ const Header = () => {
         <AppBar position="static">
             <Toolbar>
                 <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit', marginRight: '20px' }}>
                         Security Checker
+                    </Link>
+                    <Link to="/credentials" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        Credentials
                     </Link>
                 </Typography>
                 <LanguageSwitcher />

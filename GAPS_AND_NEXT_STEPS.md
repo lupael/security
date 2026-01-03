@@ -13,9 +13,9 @@ Based on the initial project specification and the request to add network device
 
 To address these gaps and implement the requested features, the following steps will be taken:
 
-1.  **[In Progress] Enhance Backend for Network Device Scanning:**
-    *   **Research and select libraries:** Identify and integrate Node.js libraries for interacting with network devices using SNMP, SSH, or vendor-specific APIs.
-    *   **Create new scanner modules:** Develop new scanner modules in `backend/jobs/` for each device type or a generic one. This will include logic to connect to devices, gather information (like firmware version, configuration, open ports, known vulnerabilities), and process the results.
+1.  **[Completed] Enhance Backend for Network Device Scanning:**
+    *   **Research and select libraries:** Identified and integrated Node.js libraries for interacting with network devices using SNMP, SSH, or vendor-specific APIs.
+    *   **Create new scanner modules:** Developed new scanner modules in `backend/jobs/` for each device type or a generic one. This includes logic to connect to devices, gather information (like firmware version, configuration, open ports, known vulnerabilities), and process the results.
     *   **Examples of information to gather:**
         *   Device uptime
         *   CPU and memory utilization
@@ -24,17 +24,17 @@ To address these gaps and implement the requested features, the following steps 
         *   Firewall rules
         *   Firmware version and checks for updates/vulnerabilities.
 
-2.  **[Pending] Update Database Models:**
-    *   Extend the `Scan` model to include a `scanType` (e.g., 'web', 'network_device').
-    *   Extend the `Finding` model to store device-specific information.
+2.  **[Completed] Update Database Models:**
+    *   Extended the `Scan` model to include a `scanType` (e.g., 'web', 'network_device').
+    *   Extended the `Finding` model to store device-specific information.
 
-3.  **[Pending] Update API Endpoints:**
-    *   Modify the `/api/scans` endpoint to accept the new `scanType` and target information (e.g., IP address and credentials for the device).
-    *   Create new endpoints if necessary for device-specific actions.
+3.  **[Completed] Update API Endpoints:**
+    *   Modified the `/api/scans` endpoint to accept the new `scanType` and target information (e.g., IP address and credentials for the device).
+    *   Created new endpoints for managing credentials.
 
-4.  **[Pending] Frontend Integration:**
-    *   Add new components to the frontend to allow users to select network device scans.
-    *   Create new views to display the results from these scans in a user-friendly format.
+4.  **[Completed] Frontend Integration:**
+    *   Added new components to the frontend to allow users to select network device scans and manage credentials.
+    *   Created new views to display the results from these scans in a user-friendly format.
 
-5.  **[Pending] Documentation:**
-    *   Update the `README.md` and other documentation to reflect the new capabilities.
+5.  **[Completed] Documentation:**
+    *   Updated the `README.md` and other documentation to reflect the new capabilities.

@@ -8,9 +8,11 @@ import { io } from 'socket.io-client';
 
 import { useTranslation } from 'react-i18next';
 
+import NetworkScanForm from '../components/NetworkScanForm';
+import { useTranslation } from 'react-i18next';
+
 const Dashboard = () => {
   const { t } = useTranslation();
-  const [target, setTarget] = useState('');
   const [scans, setScans] = useState([]);
   const user = authService.getCurrentUser();
   const isAdmin = user && user.user.role === 'admin';
@@ -42,18 +44,6 @@ const Dashboard = () => {
     };
   }, [user]);
 
-  const handleScan = async (e) => {
-    e.preventDefault();
-    try {
-      await scanService.startScan({ target });
-      setTarget('');
-      // The list will be refreshed by the socket event, but we can also refresh it here for quicker feedback
-      fetchScans();
-    } catch (error) {
-      console.error('Scan failed', error);
-    }
-  };
-
   return (
     <Container>
       <Box sx={{ my: 4 }}>
@@ -65,27 +55,7 @@ const Dashboard = () => {
             {t('adminDashboard')}
           </Button>
         )}
-        <Box component="form" onSubmit={handleScan} noValidate sx={{ mt: 1 }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="target"
-            label={t('targetLabel')}
-            name="target"
-            autoFocus
-            value={target}
-            onChange={(e) => setTarget(e.target.value)}
-          />
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-          >
-            {t('startScan')}
-          </Button>
-        </Box>
+        <NetworkScanForm />
         <Typography variant="h6" component="h2" sx={{ mt: 4 }}>
           {t('previousScans')}
         </Typography>

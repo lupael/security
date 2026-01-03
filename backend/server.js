@@ -60,6 +60,7 @@ app.get('/api/test', async (req, res) => {
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/scans', require('./routes/scans'));
+app.use('/api/credentials', require('./routes/credentials'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/admin', require('./routes/admin'));
 

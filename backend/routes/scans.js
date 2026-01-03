@@ -10,7 +10,7 @@ const { runScan } = require('../jobs/scanner');
 // @access  Private
 router.post('/', auth, async (req, res) => {
     try {
-        const { target, type, snmpCommunity, sshCredentials } = req.body;
+        const { target, type, snmpCommunity, credentialId } = req.body;
         const userId = req.user.id;
 
         const scanOptions = {
@@ -24,8 +24,8 @@ router.post('/', auth, async (req, res) => {
             if (snmpCommunity) {
                 scanOptions.snmpCommunity = snmpCommunity;
             }
-            if (sshCredentials) {
-                scanOptions.sshCredentials = sshCredentials;
+            if (credentialId) {
+                scanOptions.credentialId = credentialId;
             }
         }
 

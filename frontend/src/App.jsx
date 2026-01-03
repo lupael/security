@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Report from './pages/Report';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminRoute from './components/AdminRoute';
+import CredentialManager from './pages/CredentialManager';
 
 import Header from './components/Header';
 
@@ -29,6 +30,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/credentials" element={<CredentialManager />} />
           <Route path="/report/:id" element={<Report />} />
           <Route path="/admin" element={<AdminRoute />}>
             <Route path="/admin" element={<AdminDashboard />} />
