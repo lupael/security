@@ -48,6 +48,7 @@ jobs:
             --platform=managed \
             --region=${{ env.GAR_LOCATION }} \
             --allow-unauthenticated \
+            --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }}" \
             --format='value(status.url)')
           echo "BACKEND_URL=$BACKEND_URL" >> $GITHUB_ENV
 

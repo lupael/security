@@ -51,7 +51,7 @@ const Dashboard = () => {
     // Real-time updates via Socket.IO
     useEffect(() => {
         // Connect to the backend socket server
-        const socketUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+        const socketUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001').replace(/\/$/, '');
         const socket = io(socketUrl);
 
         socket.on('connect', () => {

@@ -2,7 +2,8 @@ import axios from 'axios';
 
 // The VITE_API_BASE_URL is set during the build process in deploy.yml
 // It defaults to a local backend URL for development.
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001').replace(/\/$/, '');
+const API_URL = `${BASE_URL}/api`;
 
 const api = axios.create({
   baseURL: API_URL,

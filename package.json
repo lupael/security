@@ -19,7 +19,8 @@
     "pa11y": "^6.2.3",
     "pg-hstore": "^2.3.4",
     "ssl-checker": "^2.0.7",
-    "socket.io-client": "^4.7.4"
+    "socket.io-client": "^4.7.4",
+    "sequelize-cli": "^6.6.2"
   },
   "keywords": [],
   "author": "",

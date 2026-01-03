@@ -31,8 +31,6 @@ app.get('/', (req, res) => {
 });
 
 // Start server
-db.sequelize.sync().then(() => {
-  server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
