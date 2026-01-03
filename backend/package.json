@@ -27,7 +27,9 @@
     "cheerio": "^1.0.0-rc.12",
     "is-website-vulnerable": "^1.0.7",
     "js-port-scan": "^1.0.3",
-    "seord": "^1.2.0"
+    "seord": "^1.2.0",
+    "net-snmp": "^3.0.0",
+    "node-ssh": "^13.0.0"
 
   },
   "devDependencies": {

@@ -10,14 +10,26 @@ const { runScan } = require('../jobs/scanner');
 // @access  Private
 router.post('/', auth, async (req, res) => {
     try {
-        const { target } = req.body;
+        const { target, type, snmpCommunity, sshCredentials } = req.body;
         const userId = req.user.id;
 
-        const newScan = await db.Scan.create({
+        const scanOptions = {
             target,
             user_id: userId,
             status: 'pending',
-        });
+            type: type || 'WEB', // Default to 'WEB' if not provided
+        };
+
+        if (type === 'NETWORK') {
+            if (snmpCommunity) {
+                scanOptions.snmpCommunity = snmpCommunity;
+            }
+            if (sshCredentials) {
+                scanOptions.sshCredentials = sshCredentials;
+            }
+        }
+
+        const newScan = await db.Scan.create(scanOptions);
 
         // Trigger the scan job asynchronously
         const io = req.app.get('io');
@@ -25,7 +37,8 @@ router.post('/', auth, async (req, res) => {
 
         res.status(201).json(newScan);
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+        console.error("Error creating scan:", error);
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
 

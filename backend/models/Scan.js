@@ -16,6 +16,19 @@ const Scan = sequelize.define('Scan', {
     type: DataTypes.STRING,
     defaultValue: 'pending',
   },
+  type: {
+    type: DataTypes.ENUM('WEB', 'NETWORK'),
+    defaultValue: 'WEB',
+    allowNull: false,
+  },
+  snmpCommunity: {
+    type: DataTypes.STRING,
+    defaultValue: 'public',
+  },
+  sshCredentials: {
+    type: DataTypes.JSON,
+    allowNull: true,
+  },
 });
 
 module.exports = Scan;

@@ -31,14 +31,24 @@ Significant progress has been made in setting up the foundational structure and 
 -   **CI/CD & Deployment (Work Completed)**: A critical requirement from the specification has been met by creating automated deployment workflows.
     -   A GitHub Actions workflow (`.github/workflows/deploy.yml`) is in place to deploy the application to **Google Cloud Run**.
     -   Instruction files (`DEPLOY_GCP.md` and `DEPLOY_AZURE.md`) have been generated, providing complete roadmaps for deploying to either GCP or Microsoft Azure. This fulfills the "CI/CD Integration" and "Deployment" sections of the specification.
+-   **Network Device Scanning (Backend Complete)**: The backend is now capable of scanning network hardware.
+    -   **Protocol Implementation**: Integrated Node.js libraries for SNMP (`net-snmp`) and SSH (`node-ssh`).
+    -   **Enhanced Scanner**: The network scanner can now poll devices for system information and interface status via SNMP, and has the capability to run basic commands via SSH.
+    -   **Database & API Expansion**: The `Scan` model has been updated to store `snmpCommunity` and `sshCredentials`. The `POST /api/scans` endpoint now accepts these parameters for network scans.
 
 ## 4. Gaps & Next Steps
 
-While the architectural foundation is strong, the next phase of development should focus on implementing the core business logic and connecting the existing components.
+With the backend for network scanning now implemented, the next steps focus on frontend integration and expanding other features.
 
--   **Core Scanning Logic**: The `scanner.js` file is currently a placeholder. The primary task is to implement the various security, SEO, and design checks detailed in the functional requirements.
--   **Database Integration**: The backend models are defined, but the application needs to be connected to a live database instance (e.g., a PostgreSQL or MySQL server) to persist data.
--   **API Endpoint Implementation**: The API routes exist, but the logic within each endpoint (e.g., initiating a scan, generating a PDF report, fetching user data) needs to be fully written.
--   **Frontend-Backend Integration**: The React components on the frontend need to be connected to the backend API to make requests, fetch data, and display scan results dynamically.
--   **Comprehensive Testing**: The specification calls for robust testing. A testing strategy including unit, integration, and end-to-end tests should be implemented to ensure application stability.
--   **Operational Monitoring**: The advanced monitoring, logging, and alerting systems (e.g., ELK stack, Grafana, PagerDuty) outlined in the specification need to be configured and integrated.
+-   **Frontend for Network Scans (Next Step)**:
+    -   **UI/API Integration**: Update the frontend to support the new "Network Device" scan type. This includes creating form fields for the target IP, SNMP community string, and SSH credentials.
+    -   **Results Display**: Design and implement components to display the findings from network device scans in a clear and organized manner.
+
+-   **Advanced Web Application Scans**: The current web scanner can be enhanced with more sophisticated checks.
+    -   **Authenticated Scans**: Allow users to provide credentials to enable the scanner to log in and audit protected areas of a website.
+    -   **In-depth Vulnerability Probing**: Go beyond checking for vulnerable libraries and actively probe for common vulnerabilities like SQL Injection, Cross-Site Scripting (XSS), and Cross-Site Request Forgery (CSRF).
+
+-   **Reporting Enhancements**:
+    -   **Report Generation**: The frontend has buttons to export reports, but the backend logic to generate the PDF and CSV files needs to be implemented.
+
+-   **Operational Monitoring**: The setup of advanced monitoring, logging, and alerting systems (e.g., ELK stack, Grafana) as outlined in the original specification is still a future task.

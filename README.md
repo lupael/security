@@ -5,8 +5,8 @@ This project is a full-stack web application that allows users to run automated 
 ## Features
 
 - **User Authentication:** Secure user registration and login using JWT.
-- **Scanning:** Users can submit targets (URLs, IPs, domains) for scanning.
-- **Mock Scan Processing:** A mock scanning engine simulates a comprehensive analysis, generating findings across various categories.
+- **Web Scanning:** Users can submit targets (URLs) for scanning against common security and SEO vulnerabilities.
+- **Network Device Scanning:** Scan network devices like routers and switches via SNMP to gather system information and identify issues like open ports or down interfaces. SSH-based scanning can be used to retrieve configuration details.
 - **Detailed Reporting:** Scan results are presented in a detailed report with charts visualizing findings by severity and category.
 - **Report Exporting:** Users can export their scan reports as either PDF or CSV files.
 - **Real-Time Updates:** The frontend receives real-time notifications when scans are completed using WebSockets (Socket.IO).
@@ -23,6 +23,7 @@ This project is a full-stack web application that allows users to run automated 
 - **ORM:** Sequelize
 - **Authentication:** JSON Web Tokens (JWT)
 - **Real-Time Communication:** Socket.IO
+- **Device Scanning:** `net-snmp`, `node-ssh`
 - **Report Generation:** `pdfkit` (for PDF), `json2csv` (for CSV)
 - **Testing:** Jest & Supertest
 
@@ -109,6 +110,8 @@ Once you log in with this admin account, a button to access the admin dashboard 
 - `POST /api/auth/register` - Register a new user.
 - `POST /api/auth/login` - Log in a user and receive a JWT.
 - `POST /api/scans` - Start a new scan (requires authentication).
+  - **Body (for Web Scan):** `{ "target": "https://example.com", "type": "WEB" }`
+  - **Body (for Network Scan):** `{ "target": "192.168.1.1", "type": "NETWORK", "snmpCommunity": "public", "sshCredentials": { "username": "admin", "password": "password" } }` (snmpCommunity and sshCredentials are optional).
 - `GET /api/scans` - Get all scans for the logged-in user (requires authentication).
 - `GET /api/scans/:id` - Get a specific scan report (requires authentication).
 - `GET /api/reports/:scanId/export?format=<pdf|csv>` - Export a report (requires authentication).
@@ -122,7 +125,7 @@ Once you log in with this admin account, a button to access the admin dashboard 
 The database schema is managed by Sequelize and consists of the following tables:
 
 - **Users:** Stores user information (`id`, `username`, `email`, `password_hash`, `role`).
-- **Scans:** Stores information about each scan (`id`, `user_id`, `target`, `status`).
+- **Scans:** Stores information about each scan (`id`, `user_id`, `target`, `status`, `type`, `snmpCommunity`, `sshCredentials`).
 - **Findings:** Stores the results of each scan (`id`, `scan_id`, `category`, `severity`, `description`, `recommendation`).
 - **Reports:** (Schema defined, functionality for storing report files can be extended).
 - **Logs:** (Schema defined for future logging implementation).
