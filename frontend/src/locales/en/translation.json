@@ -1,7 +1,7 @@
 {
     "dashboard": "Dashboard",
     "adminDashboard": "Admin Dashboard",
-    "targetLabel": "URL, IP, or Domain",
+    "targetLabel": "URL, IP, or Domain to Scan",
     "startScan": "Start Scan",
     "previousScans": "Previous Scans",
     "status": "Status",
@@ -22,5 +22,15 @@
     "dontHaveAccount": "Don't have an account? Sign Up",
     "alreadyHaveAccount": "Already have an account? Sign In",
     "homeTitle": "Security & Optimization Checker",
-    "homeSubtitle": "Your one-stop solution for website analysis."
+    "homeSubtitle": "Your one-stop solution for website analysis.",
+    "scanType": "Scan Type",
+    "webApplication": "Web Application",
+    "networkDevice": "Network Device",
+    "targetUrlLabel": "Target URL",
+    "targetIpLabel": "Target IP or Hostname",
+    "snmpCommunity": "SNMP Community",
+    "sshCredential": "SSH Credential",
+    "none": "None",
+    "sshCredentialNote": "Credentials can be managed in your account settings.",
+    "scanning": "Scanning..."
 }
