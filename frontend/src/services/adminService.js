@@ -1,7 +1,7 @@
 import axios from 'axios';
 import authHeader from './authHeader';
 
-const API_URL = 'http://localhost:5001/api/admin/';
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/admin/`;
 
 const getUsers = () => {
     return axios.get(API_URL + 'users', { headers: authHeader() });
