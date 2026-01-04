@@ -33,6 +33,10 @@ try {
     # Configure Docker to authenticate with Google Artifact Registry using impersonation
     Write-Host "Configuring Docker authentication for Artifact Registry..."
     gcloud auth configure-docker "$($GCP_REGION)-docker.pkg.dev"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Docker authentication failed. Aborting deployment."
+        exit 1
+    }
 
     # --- Backend Deployment ---
     Write-Host "--- Starting Backend Deployment ---"

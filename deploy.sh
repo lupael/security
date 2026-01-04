@@ -19,9 +19,9 @@ set -e # Exit immediately if a command exits with a non-zero status.
 # --- Configuration ---
 export PROJECT_ID="metal-being-482316-d7" # Replace with your GCP Project ID
 export GCP_REGION="us-central1" # Replace with your desired GCP region
-export AR_REPO="vuln-scan-repo" # Name for the Artifact Registry repository
-export BACKEND_SERVICE_NAME="vuln-scan-backend"
-export FRONTEND_SERVICE_NAME="vuln-scan-frontend"
+export AR_REPO="host-app-repo" # Name for the Artifact Registry repository
+export BACKEND_SERVICE_NAME="host-app-backend"
+export FRONTEND_SERVICE_NAME="host-app-frontend"
 
 # --- Derived Variables ---
 export AR_HOST="${GCP_REGION}-docker.pkg.dev"
@@ -49,10 +49,12 @@ gcloud auth configure-docker "$AR_HOST"
 
 # 4. Create Artifact Registry Repo
 echo "4. Creating Artifact Registry repository '$AR_REPO' if it doesn't exist..."
-gcloud artifacts repositories create "$AR_REPO" \
-    --repository-format=docker \
-    --location="$GCP_REGION" \
-    --description="Docker repository for vuln-scan application" || echo "Repository '$AR_REPO' already exists."
+if ! gcloud artifacts repositories describe "$AR_REPO" --location="$GCP_REGION" --project="$PROJECT_ID" &> /dev/null; then
+    gcloud artifacts repositories create "$AR_REPO" \
+        --repository-format=docker \
+        --location="$GCP_REGION" \
+        --description="Docker repository for host-app application"
+fi
 
 # 5. Build and Push Backend Image
 echo "5. Building and pushing backend image: $BACKEND_IMAGE_URI"
@@ -90,7 +92,7 @@ echo "9. Deploying frontend service '$FRONTEND_SERVICE_NAME' to Cloud Run..."
 gcloud run deploy "$FRONTEND_SERVICE_NAME" \
     --image="$FRONTEND_IMAGE_URI" \
     --platform=managed \
-    --port=80 \
+    --port=5000 \
     --allow-unauthenticated \
     --quiet
 
