@@ -10,16 +10,16 @@
     "dev:backend": "npm run dev --prefix backend"
   },
   "dependencies": {
-    "axios": "^1.6.7",
+    "axios": "^1.7.2",
     "cheerio": "^1.0.0-rc.12",
     "evilscan": "^1.8.0",
-    "lighthouse": "^11.5.0",
-    "net-snmp": "^3.6.3",
-    "node-ssh": "^13.1.0",
-    "pa11y": "^6.2.3",
+    "lighthouse": "^12.1.0",
+    "net-snmp": "^3.10.0",
+    "node-ssh": "^13.2.0",
+    "pa11y": "^7.0.0",
     "pg-hstore": "^2.3.4",
-    "ssl-checker": "^2.0.7",
-    "socket.io-client": "^4.7.4",
+    "ssl-checker-node": "^2.0.0-beta.3",
+    "socket.io-client": "^4.7.5",
     "sequelize-cli": "^6.6.2"
   },
   "keywords": [],
@@ -28,5 +28,8 @@
   "workspaces": [
     "frontend",
     "backend"
-  ]
+  ],
+  "devDependencies": {
+    "npm-check-updates": "^16.14.20"
+  }
 }
