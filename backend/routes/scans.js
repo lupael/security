@@ -1,85 +1,78 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
 const db = require('../models');
+const { runWebScan } = require('../jobs/webScanner');
+const { runNetworkScan } = require('../jobs/networkScanner');
+const { isAuthenticated } = require('../middleware/auth');
+const reportController = require('../controllers/reportController');
 
-const { runScan } = require('../jobs/scanner');
+/**
+ * POST /api/scans
+ * Starts a new scan. It determines whether to run a web or network scan
+ * based on the 'scanType' property in the request body.
+ */
+router.post('/', isAuthenticated, async (req, res) => {
+    const { target, scanType, snmpCommunity, credentialId } = req.body;
+    const userId = req.user.id;
 
-// @route   POST api/scans
-// @desc    Start a new scan
-// @access  Private
-router.post('/', auth, async (req, res) => {
+    if (!target || !scanType) {
+        return res.status(400).json({ error: 'Target and scanType are required.' });
+    }
+
     try {
-        const { target, type, snmpCommunity, credentialId } = req.body;
-        const userId = req.user.id;
-
-        const scanOptions = {
-            target,
+        // Create a new scan record in the database
+        const scan = await db.Scan.create({
             user_id: userId,
-            status: 'pending',
-            type: type || 'WEB', // Default to 'WEB' if not provided
-        };
-
-        if (type === 'NETWORK') {
-            if (snmpCommunity) {
-                scanOptions.snmpCommunity = snmpCommunity;
-            }
-            if (credentialId) {
-                scanOptions.credentialId = credentialId;
-            }
-        }
-
-        const newScan = await db.Scan.create(scanOptions);
-
-        // Trigger the scan job asynchronously
-        const io = req.app.get('io');
-        runScan(newScan.id, io, userId);
-
-        res.status(201).json(newScan);
-    } catch (error) {
-        console.error("Error creating scan:", error);
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-});
-
-// @route   GET api/scans
-// @desc    Get all scans for a user
-// @access  Private
-router.get('/', auth, async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const scans = await db.Scan.findAll({ where: { user_id: userId }, order: [['createdAt', 'DESC']] });
-        res.json(scans);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
-    }
-});
-
-// @route   GET api/scans/:id
-// @desc    Get a specific scan report
-// @access  Private
-router.get('/:id', auth, async (req, res) => {
-    try {
-        const scanId = req.params.id;
-        const userId = req.user.id;
-
-        const scan = await db.Scan.findOne({
-            where: { id: scanId, user_id: userId },
-            include: [
-                {
-                    model: db.Finding,
-                },
-            ],
+            target: target,
+            scan_type: scanType,
+            status: 'queued',
+            snmp_community: scanType === 'network' ? snmpCommunity : null,
+            credential_id: scanType === 'network' ? credentialId : null,
         });
 
-        if (!scan) {
-            return res.status(404).json({ message: 'Scan not found' });
+        const io = req.app.get('socketio');
+
+        // Asynchronously trigger the correct scanner job
+        if (scanType === 'web') {
+            runWebScan(scan.id, io, userId);
+        } else if (scanType === 'network') {
+            runNetworkScan(scan.id, io, userId);
+        } else {
+            // Should not happen if validation is correct, but good to have
+            await scan.update({ status: 'failed' });
+            return res.status(400).json({ error: 'Invalid scanType specified.' });
         }
 
-        res.json(scan);
+        res.status(201).json(scan);
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+        console.error('Failed to start scan:', error);
+        res.status(500).json({ error: 'Internal server error while starting scan.' });
     }
 });
+
+/**
+ * GET /api/scans
+ * Retrieves all historical scans for the authenticated user.
+ */
+router.get('/', isAuthenticated, async (req, res) => {
+    try {
+        const scans = await db.Scan.findAll({
+            where: { user_id: req.user.id },
+            order: [['createdAt', 'DESC']],
+            // Optionally include findings if needed for a summary view
+            // include: [{ model: db.Finding, as: 'findings' }] 
+        });
+        res.json(scans);
+    } catch (error) {
+        console.error('Failed to retrieve scans:', error);
+        res.status(500).json({ error: 'Internal server error while fetching scans.' });
+    }
+});
+
+/**
+ * GET /api/scans/:id/export/:format
+ * Exports the scan report as PDF or CSV.
+ */
+router.get('/:id/export/:format', isAuthenticated, reportController.exportReport);
 
 module.exports = router;

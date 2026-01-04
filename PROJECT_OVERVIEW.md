@@ -26,7 +26,7 @@ The specification outlines a modern, scalable, and containerized architecture:
 Significant progress has been made in setting up the foundational structure and addressing key architectural requirements.
 
 -   **Project Scaffolding**: The project has a clean, organized structure with separate `frontend` and `backend` directories, each with its own `Dockerfile`, ready for containerization.
--   **Backend Structure**: A Node.js/Express backend is in place. The file structure shows defined API routes (`/routes`), Mongoose models (`/models` for Users, Scans, Reports, etc.), and a placeholder for the core scanning logic (`/jobs/scanner.js`).
+-   **Backend Structure**: A Node.js/Express backend is in place. The file structure shows defined API routes (`/routes`), Sequelize models (`/models` for Users, Scans, Reports, etc.), and a placeholder for the core scanning logic (`/jobs/scanner.js`).
 -   **Frontend Structure**: A React application is set up with components and pages for major features like Login, Registration, Dashboard, and Reports, providing a solid starting point for the user interface.
 -   **CI/CD & Deployment (Work Completed)**: A critical requirement from the specification has been met by creating automated deployment workflows.
     -   A GitHub Actions workflow (`.github/workflows/deploy.yml`) is in place to deploy the application to **Google Cloud Run**.

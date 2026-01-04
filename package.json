@@ -9,6 +9,19 @@
     "dev:frontend": "npm run dev --prefix frontend",
     "dev:backend": "npm run dev --prefix backend"
   },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "cheerio": "^1.0.0-rc.12",
+    "evilscan": "^1.8.0",
+    "lighthouse": "^11.5.0",
+    "net-snmp": "^3.6.3",
+    "node-ssh": "^13.1.0",
+    "pa11y": "^6.2.3",
+    "pg-hstore": "^2.3.4",
+    "ssl-checker": "^2.0.7",
+    "socket.io-client": "^4.7.4",
+    "sequelize-cli": "^6.6.2"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
