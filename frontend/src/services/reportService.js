@@ -1,7 +1,7 @@
 import axios from 'axios';
 import authHeader from './authHeader';
 
-const API_URL = 'http://localhost:5001/api/reports/';
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/reports/`;
 
 const exportReport = (scanId, format) => {
   return axios.get(API_URL + `${scanId}/export?format=${format}`, { 

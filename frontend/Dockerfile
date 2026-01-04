@@ -1,21 +1,30 @@
-FROM node:18-alpine
+# Stage 1: Build the React application
+FROM node:18-alpine AS build
 
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-
-# In your local environment, you would uncomment the following line:
-# RUN npm install
-
-# If you are building this image manually, run 'npm install' before building.
-# This step is commented out due to limitations of the current environment.
+RUN npm install
 
 COPY . .
 
-# In a production environment, you would build the static files
-# and serve them with a web server like nginx.
-# For this project, we will run the development server.
+# vite build command will use the VITE_API_BASE_URL passed in
+# The default value is provided for local builds if the arg is not passed.
+ARG VITE_API_BASE_URL=http://localhost:5000
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+RUN npm run build
 
-EXPOSE 5173
+# Stage 2: Serve the application using Nginx
+FROM nginx:1.21.0-alpine
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# Copy the build output from the build stage
+COPY --from=build /usr/src/app/dist /usr/share/nginx/html
+
+# Copy the nginx config file
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]

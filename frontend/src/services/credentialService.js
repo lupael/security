@@ -1,7 +1,7 @@
 import axios from 'axios';
 import authHeader from './authHeader';
 
-const API_URL = 'http://localhost:5000/api/credentials/';
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/credentials/`;
 
 const createCredential = (name, type, username, secret) => {
     return axios.post(API_URL, { name, type, username, secret }, { headers: authHeader() });
