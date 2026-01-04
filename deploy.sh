@@ -3,20 +3,16 @@
 # This script deploys the frontend and backend services to Google Cloud Run.
 #
 # Prerequisites:
-# 1. Google Cloud SDK (gcloud) installed and authenticated.
-# 2. Docker installed and running.
-# 3. A GCP project created.
-# 4. A service account with the following roles:
+# 1. Google Cloud SDK (gcloud) installed.
+# 2. An authenticated gcloud session (e.g., run `gcloud auth login` or be in an environment
+#    with Workload Identity Federation like GitHub Actions).
+# 3. Docker installed and running.
+# 4. A GCP project created with the necessary APIs enabled (run, artifactregistry, cloudbuild).
+# 5. The authenticated user/service account must have the following roles:
 #    - Cloud Run Admin (roles/run.admin)
 #    - Storage Admin (roles/storage.admin)
 #    - Artifact Registry Admin (roles/artifactregistry.admin)
 #    - Service Account User (roles/iam.serviceAccountUser)
-#
-# NOTE: Your project seems to have a policy that prevents service account key
-# creation (`constraints/iam.disableServiceAccountKeyCreation`). You need to either
-# get this policy changed or use an alternative authentication method like
-# Workload Identity Federation to generate the necessary credentials.
-# This script assumes you have a JSON key file for your service account.
 
 set -e # Exit immediately if a command exits with a non-zero status.
 
@@ -26,7 +22,6 @@ export GCP_REGION="us-central1" # Replace with your desired GCP region
 export AR_REPO="vuln-scan-repo" # Name for the Artifact Registry repository
 export BACKEND_SERVICE_NAME="vuln-scan-backend"
 export FRONTEND_SERVICE_NAME="vuln-scan-frontend"
-export GCP_SA_KEY_PATH="./gcp-sa-key.json" # Path to your GCP service account JSON key
 
 # --- Derived Variables ---
 export AR_HOST="${GCP_REGION}-docker.pkg.dev"
@@ -37,14 +32,8 @@ export FRONTEND_IMAGE_URI="${AR_HOST}/${PROJECT_ID}/${AR_REPO}/${FRONTEND_SERVIC
 
 echo "--- Starting Deployment ---"
 
-# 1. Authentication
-echo "1. Authenticating with GCP..."
-if [ ! -f "$GCP_SA_KEY_PATH" ]; then
-    echo "ERROR: Service Account Key file not found at '$GCP_SA_KEY_PATH'."
-    echo "Please download the key and place it at the correct path."
-    exit 1
-fi
-gcloud auth activate-service-account --key-file="$GCP_SA_KEY_PATH"
+# 1. Set GCP Project and Region
+echo "1. Setting GCP project and region..."
 gcloud config set project "$PROJECT_ID"
 gcloud config set run/region "$GCP_REGION"
 
