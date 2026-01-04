@@ -38,6 +38,10 @@ try {
         exit 1
     }
 
+    # --- Install Dependencies ---
+    Write-Host "Installing npm dependencies for workspaces..."
+    npm install
+
     # --- Backend Deployment ---
     Write-Host "--- Starting Backend Deployment ---"
     $BACKEND_IMAGE_NAME = "$($GCP_REGION)-docker.pkg.dev/$GCP_PROJECT_ID/$GAR_REPOSITORY_NAME/backend:latest"

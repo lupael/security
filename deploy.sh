@@ -56,9 +56,13 @@ if ! gcloud artifacts repositories describe "$AR_REPO" --location="$GCP_REGION" 
         --description="Docker repository for host-app application"
 fi
 
+# Run npm install to generate the root package-lock.json
+echo "Installing npm dependencies for workspaces..."
+npm install
+
 # 5. Build and Push Backend Image
 echo "5. Building and pushing backend image: $BACKEND_IMAGE_URI"
-docker build -t "$BACKEND_IMAGE_URI" ./backend
+docker build -t "$BACKEND_IMAGE_URI" -f ./backend/Dockerfile .
 docker push "$BACKEND_IMAGE_URI"
 
 # 6. Deploy Backend to Cloud Run
@@ -83,8 +87,7 @@ echo "Backend URL: $BACKEND_URL"
 echo "8. Building and pushing frontend image: $FRONTEND_IMAGE_URI"
 # We pass the backend URL as a build argument to the frontend Dockerfile
 docker build -t "$FRONTEND_IMAGE_URI" \
-    --build-arg VITE_API_BASE_URL="$BACKEND_URL" \
-    ./frontend
+    --build-arg VITE_API_BASE_URL="$BACKEND_URL" -f ./frontend/Dockerfile .
 docker push "$FRONTEND_IMAGE_URI"
 
 # 9. Deploy Frontend to Cloud Run
