@@ -11,13 +11,21 @@ jobs:
   deploy:
     name: Build and Deploy to Cloud Run
     runs-on: ubuntu-latest
-    
+
+    # Add the required permissions for Workload Identity Federation
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     env:
-      PROJECT_ID: "your-gcp-project-id" # TODO: Replace with your GCP Project ID
-      GAR_LOCATION: "us-central1" # TODO: Replace with your Google Artifact Registry location
-      BACKEND_SERVICE_NAME: "api-service" # TODO: Replace with your desired backend service name
-      FRONTEND_SERVICE_NAME: "frontend-service" # TODO: Replace with your desired frontend service name
-      
+      PROJECT_ID: "metal-being-482316-d7"
+      GAR_LOCATION: "us-central1"
+      BACKEND_SERVICE_NAME: "host-app-backend"
+      FRONTEND_SERVICE_NAME: "host-app-frontend"
+      # TODO: Replace with your Workload Identity Provider. See DEPLOY_GCP.md for instructions.
+      WORKLOAD_IDENTITY_PROVIDER: "projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/YOUR_POOL_NAME/providers/YOUR_PROVIDER_NAME"
+      SERVICE_ACCOUNT_EMAIL: "github-actions-deployer@metal-being-482316-d7.iam.gserviceaccount.com"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,7 +33,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT_EMAIL }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -69,4 +78,3 @@ jobs:
             --platform=managed \
             --region=${{ env.GAR_LOCATION }} \
             --allow-unauthenticated
-

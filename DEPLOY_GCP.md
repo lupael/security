@@ -2,50 +2,104 @@
 
 This document provides the steps to configure a CI/CD pipeline using GitHub Actions to automatically deploy your application to Google Cloud Run.
 
-## 1. Prerequisites on Google Cloud
+This guide uses **Workload Identity Federation**, which is the recommended, keyless authentication method for accessing Google Cloud from external environments like GitHub Actions.
 
-Before you begin, you need to set up the following in your Google Cloud project:
+## 1. Understanding the Authentication Method
 
-*   **Enable APIs**: In your GCP project console, ensure the following APIs are enabled:
-    *   Cloud Run API
-    *   Artifact Registry API
-    *   Cloud Build API
+Previously, this guide recommended using service account keys. However, your GCP organization may have a security policy (`constraints/iam.disableServiceAccountKeyCreation`) that prevents the creation of service account keys. This is a good security practice.
 
-*   **Create a Service Account**: This account will be used by GitHub Actions to authenticate with GCP.
-    1.  Navigate to **IAM & Admin > Service Accounts**.
-    2.  Click **Create Service Account**.
-    3.  Give it a name (e.g., `github-actions-deployer`).
-    4.  Grant it the following roles:
-        *   `Cloud Run Admin`
-        *   `Storage Admin`
-        *   `Artifact Registry Admin`
-    5.  Continue and create the account.
-    6.  After creation, find the service account, click on it, go to the **Keys** tab, click **Add Key**, and choose **Create new key**.
-    7.  Select **JSON** as the key type and click **Create**. A JSON key file will be downloaded to your computer.
+Instead, we will use Workload Identity Federation, which allows GitHub Actions to impersonate a Google Cloud service account without needing a long-lived JSON key.
 
-## 2. Configure GitHub Secrets
+## 2. Prerequisites on Google Cloud
 
-You need to add the service account key to your GitHub repository's secrets so the workflow can authenticate.
+### 2.1. Enable APIs
+In your GCP project console, ensure the following APIs are enabled:
+-   IAM Credentials API (`iamcredentials.googleapis.com`)
+-   Cloud Run API (`cloudrun.googleapis.com`)
+-   Artifact Registry API (`artifactregistry.googleapis.com`)
+-   Cloud Build API (`cloudbuild.googleapis.com`)
 
-1.  In your GitHub repository, go to **Settings > Secrets and variables > Actions**.
-2.  Click **New repository secret**.
-3.  Name the secret `GCP_SA_KEY`.
-4.  Paste the entire content of the downloaded JSON key file as the value for this secret.
+You can enable them with `gcloud` in your Cloud Shell:
+```bash
+gcloud services enable iamcredentials.googleapis.com cloudrun.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com
+```
+
+### 2.2. Create a Service Account
+Create a service account that GitHub Actions will impersonate. The service account `github-actions-deployer` may already exist from previous attempts.
+
+Run the following commands in your Cloud Shell:
+```bash
+# --- Configuration ---
+export PROJECT_ID="metal-being-482316-d7"
+export SA_NAME="github-actions-deployer"
+export SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+# --- Script ---
+
+# Create the service account if it doesn't exist
+gcloud iam service-accounts describe $SA_EMAIL --project=$PROJECT_ID > /dev/null 2>&1 || \
+  gcloud iam service-accounts create $SA_NAME --display-name="GitHub Actions Deployer" --project=$PROJECT_ID
+
+# Grant the necessary roles
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:$SA_EMAIL" --role="roles/run.admin"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:$SA_EMAIL" --role="roles/storage.admin"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:$SA_EMAIL" --role="roles/artifactregistry.admin"
+```
+*Note: The `add-iam-policy-binding` commands might prompt you to specify a condition if your project has conditional role bindings. If so, choose the 'None' option to grant the roles unconditionally.*
+
+### 2.3. Set up Workload Identity Federation
+This process connects your GitHub repository to your GCP service account.
+
+1.  **Create a Workload Identity Pool:**
+    ```bash
+    gcloud iam workload-identity-pools create "github-pool" \
+        --project="$PROJECT_ID" \
+        --location="global" \
+        --display-name="GitHub Pool"
+    ```
+
+2.  **Get the full ID of the pool:**
+    ```bash
+    export POOL_ID=$(gcloud iam workload-identity-pools describe "github-pool" --project="$PROJECT_ID" --location="global" --format="value(name)")
+    ```
+
+3.  **Create a Workload Identity Provider for your GitHub repository:**
+    ```bash
+    gcloud iam workload-identity-pools providers create-oidc "github-provider" \
+        --project="$PROJECT_ID" \
+        --location="global" \
+        --workload-identity-pool="github-pool" \
+        --display-name="GitHub Provider" \
+        --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
+        --issuer-uri="https://token.actions.githubusercontent.com"
+    ```
+
+4.  **Allow GitHub Actions from your repo to impersonate the service account:**
+    Replace `your-github-organization/your-repo-name` with your repository path (e.g., `my-user/my-app`).
+    ```bash
+    gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
+        --project="$PROJECT_ID" \
+        --role="roles/iam.workloadIdentityUser" \
+        --member="principalSet://iam.googleapis.com/$POOL_ID/attribute.repository/your-github-organization/your-repo-name"
+    ```
+
+5.  **Get your Project Number:**
+    You will need this for the GitHub Actions workflow file.
+    ```bash
+    export PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
+    echo "Your project number is: $PROJECT_NUMBER"
+    ```
 
 ## 3. GitHub Actions Workflow
 
-The following workflow file (`.github/workflows/deploy.yml`) automates the build and deployment process. It has already been created for you.
+The `.github/workflows/deploy.yml` file has been updated to use Workload Identity Federation. You just need to configure the `WORKLOAD_IDENTITY_PROVIDER` environment variable in that file.
 
-### Workflow Configuration
+1.  Open the `.github/workflows/deploy.yml` file.
+2.  Find the `WORKLOAD_IDENTITY_PROVIDER` variable.
+3.  Its value should be in the format: `projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/YOUR_POOL_NAME/providers/YOUR_PROVIDER_NAME`.
+4.  Based on the commands above, replace `YOUR_PROJECT_NUMBER` with the number you got from the previous step. The pool name is `github-pool` and the provider name is `github-provider`.
 
-You must update the placeholder values in `.github/workflows/deploy.yml`:
-
-*   Open the `.github/workflows/deploy.yml` file in your repository.
-*   Locate the `env` block and replace the following placeholder values with your actual GCP project details:
-    *   `PROJECT_ID`: Your Google Cloud Project ID.
-    *   `GAR_LOCATION`: The region for your Google Artifact Registry (e.g., `us-central1`).
-    *   `BACKEND_SERVICE_NAME`: A unique name for your backend Cloud Run service (e.g., `my-app-backend`).
-    *   `FRONTEND_SERVICE_NAME`: A unique name for your frontend Cloud Run service (e.g., `my-app-frontend`).
+**No GitHub secrets are required for this setup.** You can safely remove the `GCP_SA_KEY` secret from your GitHub repository settings if it exists.
 
 ## 4. Verify Frontend Dockerfile
 
@@ -84,5 +138,3 @@ COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
-
-Once these steps are completed, any push to your `main` branch will automatically trigger the workflow and deploy your application to Google Cloud Run.
