@@ -1,17 +1,27 @@
-FROM node:18-alpine
+FROM node:20
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-COPY package*.json ./
+# Copy root package files
+COPY package.json package-lock.json ./
 
-# In your local environment, you would uncomment the following line:
-# RUN npm install
+# Copy workspace definitions (required for npm workspaces)
+COPY backend/package.json ./backend/
+COPY frontend/package.json ./frontend/
 
-# If you are building this image manually, run 'npm install' before building.
-# This step is commented out due to limitations of the current environment.
+# Install dependencies, including sequelize-cli from the root
+RUN npm ci
 
-COPY . .
+# Copy backend source code
+COPY backend ./backend
 
-EXPOSE 5001
+# Make entrypoint script executable
+RUN chmod +x ./backend/entrypoint.sh
 
-CMD ["node", "server.js"]
+EXPOSE 3001
+
+# Use entrypoint to run migrations and then start the app
+ENTRYPOINT ["./backend/entrypoint.sh"]
+
+# Command to run the main application
+CMD ["node", "backend/index.js"]

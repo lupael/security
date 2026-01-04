@@ -1,21 +1,37 @@
-FROM node:18-alpine
+# Build Stage
+FROM node:20 AS build
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-COPY package*.json ./
+# Copy root package files
+COPY package.json package-lock.json ./
 
-# In your local environment, you would uncomment the following line:
-# RUN npm install
+# Copy workspace definitions
+COPY backend/package.json ./backend/
+COPY frontend/package.json ./frontend/
 
-# If you are building this image manually, run 'npm install' before building.
-# This step is commented out due to limitations of the current environment.
+# Install dependencies
+RUN npm ci
 
-COPY . .
+# Copy frontend source code
+COPY frontend ./frontend
 
-# In a production environment, you would build the static files
-# and serve them with a web server like nginx.
-# For this project, we will run the development server.
+# Build argument for API URL
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
-EXPOSE 5173
+# Build the frontend
+RUN npm run build --workspace=frontend
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# Production Stage
+FROM nginx:alpine
+
+# Copy custom Nginx config
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy built assets
+COPY --from=build /app/frontend/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
